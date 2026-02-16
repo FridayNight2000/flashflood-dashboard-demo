@@ -55,15 +55,25 @@ export type StationRecentEvent = {
   peak_time_str: string | null;
 };
 
+export type StationMatchedPoint = {
+  id: number;
+  peak_time: string;
+  peak_value: number;
+  peak_time_str: string | null;
+};
+
 // 修改备注: 单站点事件聚合 API 返回类型
 export type StationEventsApiResponse = {
-  stationId: string;
+  stationId?: string;
+  basinName?: string;
   summary: StationEventSummary;
   recentEvents: StationRecentEvent[];
+  matchedSeries?: StationMatchedPoint[];
 };
 
 // 修改备注: 时间段筛选时的轻量计数响应
 export type StationEventsCountResponse = {
-  stationId: string;
+  stationId?: string;
+  basinName?: string;
   matchedEvents: number;
 };

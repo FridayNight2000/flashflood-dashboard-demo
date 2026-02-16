@@ -19,38 +19,12 @@ type FilteredSummaryRow = {
   avg_fall_time: number | null;
 };
 
-type StationRecentEventRow = {
-  id: number;
-  start_time: string | null;
-  peak_time: string | null;
-  end_time: string | null;
-  start_value: number | null;
-  peak_value: number | null;
-  end_value: number | null;
-  rise_time: number | null;
-  fall_time: number | null;
-  peak_time_str: string | null;
-};
-
 type StationMatchedPointRow = {
   id: number;
   peak_time: string;
   peak_value: number;
   peak_time_str: string | null;
 };
-
-function parseLimit(value: string | null): number {
-  if (!value) {
-    return 20;
-  }
-
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    return 20;
-  }
-
-  return Math.min(parsed, 100);
-}
 
 function parseBoolean(value: string | null, fallback: boolean): boolean {
   if (value === null) {
@@ -69,161 +43,159 @@ function parseDateOnly(value: string | null): string | null {
 
 const summaryStmt = db.prepare(`
   SELECT
-    COUNT(*) AS total_events,
-    MIN(start_time) AS first_start_time,
-    MAX(end_time) AS last_end_time,
-    MIN(peak_time) AS min_peak_time,
-    MAX(peak_time) AS max_peak_time
-  FROM station_records
-  WHERE station_id = ?
+    COUNT(sr.id) AS total_events,
+    MIN(sr.start_time) AS first_start_time,
+    MAX(sr.end_time) AS last_end_time,
+    MIN(sr.peak_time) AS min_peak_time,
+    MAX(sr.peak_time) AS max_peak_time
+  FROM station_records sr
+  JOIN stations s ON sr.station_id = s.station_id
+  WHERE s.basin_name = ?
 `);
 
 const filteredSummaryAllStmt = db.prepare(`
   SELECT
-    COUNT(*) AS matched_events,
-    MAX(peak_value) AS max_peak_value,
-    AVG(peak_value) AS avg_peak_value,
-    AVG(rise_time) AS avg_rise_time,
-    AVG(fall_time) AS avg_fall_time
-  FROM station_records
-  WHERE station_id = ?
+    COUNT(sr.id) AS matched_events,
+    MAX(sr.peak_value) AS max_peak_value,
+    AVG(sr.peak_value) AS avg_peak_value,
+    AVG(sr.rise_time) AS avg_rise_time,
+    AVG(sr.fall_time) AS avg_fall_time
+  FROM station_records sr
+  JOIN stations s ON sr.station_id = s.station_id
+  WHERE s.basin_name = ?
 `);
 
 const filteredSummaryBetweenStmt = db.prepare(`
   SELECT
-    COUNT(*) AS matched_events,
-    MAX(peak_value) AS max_peak_value,
-    AVG(peak_value) AS avg_peak_value,
-    AVG(rise_time) AS avg_rise_time,
-    AVG(fall_time) AS avg_fall_time
-  FROM station_records
-  WHERE station_id = ?
-    AND peak_time >= ?
-    AND peak_time <= ?
+    COUNT(sr.id) AS matched_events,
+    MAX(sr.peak_value) AS max_peak_value,
+    AVG(sr.peak_value) AS avg_peak_value,
+    AVG(sr.rise_time) AS avg_rise_time,
+    AVG(sr.fall_time) AS avg_fall_time
+  FROM station_records sr
+  JOIN stations s ON sr.station_id = s.station_id
+  WHERE s.basin_name = ?
+    AND sr.peak_time >= ?
+    AND sr.peak_time <= ?
 `);
 
 const filteredSummaryFromStmt = db.prepare(`
   SELECT
-    COUNT(*) AS matched_events,
-    MAX(peak_value) AS max_peak_value,
-    AVG(peak_value) AS avg_peak_value,
-    AVG(rise_time) AS avg_rise_time,
-    AVG(fall_time) AS avg_fall_time
-  FROM station_records
-  WHERE station_id = ?
-    AND peak_time >= ?
+    COUNT(sr.id) AS matched_events,
+    MAX(sr.peak_value) AS max_peak_value,
+    AVG(sr.peak_value) AS avg_peak_value,
+    AVG(sr.rise_time) AS avg_rise_time,
+    AVG(sr.fall_time) AS avg_fall_time
+  FROM station_records sr
+  JOIN stations s ON sr.station_id = s.station_id
+  WHERE s.basin_name = ?
+    AND sr.peak_time >= ?
 `);
 
 const filteredSummaryToStmt = db.prepare(`
   SELECT
-    COUNT(*) AS matched_events,
-    MAX(peak_value) AS max_peak_value,
-    AVG(peak_value) AS avg_peak_value,
-    AVG(rise_time) AS avg_rise_time,
-    AVG(fall_time) AS avg_fall_time
-  FROM station_records
-  WHERE station_id = ?
-    AND peak_time <= ?
+    COUNT(sr.id) AS matched_events,
+    MAX(sr.peak_value) AS max_peak_value,
+    AVG(sr.peak_value) AS avg_peak_value,
+    AVG(sr.rise_time) AS avg_rise_time,
+    AVG(sr.fall_time) AS avg_fall_time
+  FROM station_records sr
+  JOIN stations s ON sr.station_id = s.station_id
+  WHERE s.basin_name = ?
+    AND sr.peak_time <= ?
 `);
 
 const matchedSeriesAllStmt = db.prepare(`
   SELECT
-    id,
-    peak_time,
-    peak_value,
-    peak_time_str
-  FROM station_records
-  WHERE station_id = ?
-    AND peak_time IS NOT NULL
-    AND peak_value IS NOT NULL
-  ORDER BY peak_time ASC
+    sr.id,
+    sr.peak_time,
+    sr.peak_value,
+    sr.peak_time_str
+  FROM station_records sr
+  JOIN stations s ON sr.station_id = s.station_id
+  WHERE s.basin_name = ?
+    AND sr.peak_time IS NOT NULL
+    AND sr.peak_value IS NOT NULL
+  ORDER BY sr.peak_time ASC
 `);
 
 const matchedSeriesBetweenStmt = db.prepare(`
   SELECT
-    id,
-    peak_time,
-    peak_value,
-    peak_time_str
-  FROM station_records
-  WHERE station_id = ?
-    AND peak_time >= ?
-    AND peak_time <= ?
-    AND peak_time IS NOT NULL
-    AND peak_value IS NOT NULL
-  ORDER BY peak_time ASC
+    sr.id,
+    sr.peak_time,
+    sr.peak_value,
+    sr.peak_time_str
+  FROM station_records sr
+  JOIN stations s ON sr.station_id = s.station_id
+  WHERE s.basin_name = ?
+    AND sr.peak_time >= ?
+    AND sr.peak_time <= ?
+    AND sr.peak_time IS NOT NULL
+    AND sr.peak_value IS NOT NULL
+  ORDER BY sr.peak_time ASC
 `);
 
 const matchedSeriesFromStmt = db.prepare(`
   SELECT
-    id,
-    peak_time,
-    peak_value,
-    peak_time_str
-  FROM station_records
-  WHERE station_id = ?
-    AND peak_time >= ?
-    AND peak_time IS NOT NULL
-    AND peak_value IS NOT NULL
-  ORDER BY peak_time ASC
+    sr.id,
+    sr.peak_time,
+    sr.peak_value,
+    sr.peak_time_str
+  FROM station_records sr
+  JOIN stations s ON sr.station_id = s.station_id
+  WHERE s.basin_name = ?
+    AND sr.peak_time >= ?
+    AND sr.peak_time IS NOT NULL
+    AND sr.peak_value IS NOT NULL
+  ORDER BY sr.peak_time ASC
 `);
 
 const matchedSeriesToStmt = db.prepare(`
   SELECT
-    id,
-    peak_time,
-    peak_value,
-    peak_time_str
-  FROM station_records
-  WHERE station_id = ?
-    AND peak_time <= ?
-    AND peak_time IS NOT NULL
-    AND peak_value IS NOT NULL
-  ORDER BY peak_time ASC
+    sr.id,
+    sr.peak_time,
+    sr.peak_value,
+    sr.peak_time_str
+  FROM station_records sr
+  JOIN stations s ON sr.station_id = s.station_id
+  WHERE s.basin_name = ?
+    AND sr.peak_time <= ?
+    AND sr.peak_time IS NOT NULL
+    AND sr.peak_value IS NOT NULL
+  ORDER BY sr.peak_time ASC
 `);
 
-const recentEventsStmt = db.prepare(`
-  SELECT
-    id,
-    start_time,
-    peak_time,
-    end_time,
-    start_value,
-    peak_value,
-    end_value,
-    rise_time,
-    fall_time,
-    peak_time_str
-  FROM station_records
-  WHERE station_id = ?
-  ORDER BY peak_time DESC
-  LIMIT ?
-`);
+// Note: Recent events are not as meaningful across a whole basin without extensive filtering,
+// but we can expose top events by peak value or time if needed.
+// For now, we omit recentEvents for basin view unless specifically requested.
 
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ stationId: string }> | { stationId: string } },
+  context: { params: Promise<{ basinName: string }> },
 ) {
   try {
-    const { stationId } = await Promise.resolve(context.params);
-    const cleanStationId = stationId?.trim();
+    const { basinName } = await context.params;
+    const cleanBasin = decodeURIComponent(basinName).trim();
 
-    if (!cleanStationId) {
-      return NextResponse.json({ error: "stationId is required." }, { status: 400 });
+    if (!cleanBasin) {
+      return NextResponse.json(
+        { error: "basinName is required." },
+        { status: 400 },
+      );
     }
 
-    const limit = parseLimit(req.nextUrl.searchParams.get("limit"));
-    const includeRecent = parseBoolean(
-      req.nextUrl.searchParams.get("includeRecent"),
-      true,
-    );
     const includeMatchedSeries = parseBoolean(
       req.nextUrl.searchParams.get("includeMatchedSeries"),
       false,
     );
-    const countOnly = parseBoolean(req.nextUrl.searchParams.get("countOnly"), false);
+    const countOnly = parseBoolean(
+      req.nextUrl.searchParams.get("countOnly"),
+      false,
+    );
 
-    const peakStartRaw = parseDateOnly(req.nextUrl.searchParams.get("peakStart"));
+    const peakStartRaw = parseDateOnly(
+      req.nextUrl.searchParams.get("peakStart"),
+    );
     const peakEndRaw = parseDateOnly(req.nextUrl.searchParams.get("peakEnd"));
 
     let peakStart = peakStartRaw;
@@ -232,7 +204,7 @@ export async function GET(
       [peakStart, peakEnd] = [peakEnd, peakStart];
     }
 
-    const summary = summaryStmt.get(cleanStationId) as StationEventSummaryRow;
+    const summary = summaryStmt.get(cleanBasin) as StationEventSummaryRow;
     const totalEvents = summary.total_events ?? 0;
 
     const startTs = peakStart ? `${peakStart} 00:00:00` : null;
@@ -241,64 +213,61 @@ export async function GET(
     let filteredSummary: FilteredSummaryRow;
     if (startTs && endTs) {
       filteredSummary = filteredSummaryBetweenStmt.get(
-        cleanStationId,
+        cleanBasin,
         startTs,
         endTs,
       ) as FilteredSummaryRow;
     } else if (startTs) {
       filteredSummary = filteredSummaryFromStmt.get(
-        cleanStationId,
+        cleanBasin,
         startTs,
       ) as FilteredSummaryRow;
     } else if (endTs) {
       filteredSummary = filteredSummaryToStmt.get(
-        cleanStationId,
+        cleanBasin,
         endTs,
       ) as FilteredSummaryRow;
     } else {
       filteredSummary = filteredSummaryAllStmt.get(
-        cleanStationId,
+        cleanBasin,
       ) as FilteredSummaryRow;
     }
     const matchedEvents = filteredSummary.matched_events ?? totalEvents;
 
     if (countOnly) {
       return NextResponse.json({
-        stationId: cleanStationId,
+        basinName: cleanBasin,
         matchedEvents,
       });
     }
 
-    const recentEvents = includeRecent
-      ? (recentEventsStmt.all(cleanStationId, limit) as StationRecentEventRow[])
-      : [];
     let matchedSeries: StationMatchedPointRow[] | undefined;
     if (includeMatchedSeries) {
       if (startTs && endTs) {
         matchedSeries = matchedSeriesBetweenStmt.all(
-          cleanStationId,
+          cleanBasin,
           startTs,
           endTs,
         ) as StationMatchedPointRow[];
       } else if (startTs) {
         matchedSeries = matchedSeriesFromStmt.all(
-          cleanStationId,
+          cleanBasin,
           startTs,
         ) as StationMatchedPointRow[];
       } else if (endTs) {
         matchedSeries = matchedSeriesToStmt.all(
-          cleanStationId,
+          cleanBasin,
           endTs,
         ) as StationMatchedPointRow[];
       } else {
         matchedSeries = matchedSeriesAllStmt.all(
-          cleanStationId,
+          cleanBasin,
         ) as StationMatchedPointRow[];
       }
     }
 
     return NextResponse.json({
-      stationId: cleanStationId,
+      basinName: cleanBasin,
       summary: {
         totalEvents,
         matchedEvents,
@@ -311,13 +280,13 @@ export async function GET(
         avgRiseTime: filteredSummary.avg_rise_time,
         avgFallTime: filteredSummary.avg_fall_time,
       },
-      recentEvents,
+      recentEvents: [], // Empty for now as discussed
       matchedSeries,
     });
   } catch (error) {
     return NextResponse.json(
       {
-        error: "Failed to query station events.",
+        error: "Failed to query basin events.",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },

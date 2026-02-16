@@ -1,0 +1,177 @@
+.stationSidePanel {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  width: min(380px, calc(100vw - 2rem));
+  max-height: calc(100% - 2rem);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #d5dbe3;
+  border-radius: 16px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  display: none;
+  overflow: hidden;
+}
+
+.open {
+  display: block;
+}
+
+.panelExpanded {
+  width: min(980px, calc(100vw - 2rem));
+}
+
+.stationSidePanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.stationSidePanelHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.stationSideCloseBtn {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stationSidePanelBody {
+  padding: 0.85rem 1rem;
+  overflow: auto;
+  max-height: calc(100% - 56px);
+}
+
+.contentSplit {
+  display: block;
+}
+
+.infoColumn {
+  min-width: 0;
+}
+
+.chartColumn {
+  margin-top: 0.8rem;
+}
+
+.stationSidePanelBody p {
+  margin: 0 0 0.55rem;
+  line-height: 1.35;
+  font-size: 0.95rem;
+}
+
+.stationSideDivider {
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  margin: 0.8rem 0;
+}
+
+.timelineHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.chartCard {
+  margin-top: 0.55rem;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 0.55rem;
+}
+
+.chartCanvas {
+  width: 100%;
+  height: 260px;
+}
+
+.downloadBtn {
+  margin-top: 0.55rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #f8fafc;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.sidePanelDateRow {
+  display: flex;
+  gap: 0.45rem;
+  margin: 0.3rem 0 0.6rem;
+}
+
+.sidePanelDateInput {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.25rem 0.35rem;
+  font-size: 0.82rem;
+}
+
+.stationSidePanelEmpty {
+  padding: 1rem;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 900px) {
+  .stationSidePanel {
+    top: auto;
+    right: 0.75rem;
+    left: 0.75rem;
+    bottom: 0.75rem;
+    width: auto;
+    max-height: 42%;
+  }
+
+  .panelExpanded {
+    width: auto;
+  }
+}
+
+@media (min-width: 901px) {
+  .panelExpanded .contentSplit {
+    display: grid;
+    grid-template-columns: minmax(300px, 38%) 1fr;
+    gap: 12px;
+  }
+
+  .panelExpanded .infoColumn {
+    max-height: calc(100% - 6px);
+    overflow: auto;
+    padding-right: 2px;
+  }
+
+  .panelExpanded .chartColumn {
+    margin-top: 0;
+  }
+}
+
+.placeholderText {
+  color: #64748b;
+  font-style: italic;
+  font-size: 0.9rem;
+}

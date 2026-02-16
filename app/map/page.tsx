@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import styles from "./page.module.css";
 
 const LeafletMap = dynamic(() => import("./LeafletMap"), {
   ssr: false,
@@ -9,7 +10,7 @@ const LeafletMap = dynamic(() => import("./LeafletMap"), {
 
 export default function MapPage() {
   return (
-    <main className="map">
+    <main className={styles.map}>
       <LeafletMap />
     </main>
   );

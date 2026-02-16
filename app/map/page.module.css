@@ -1,0 +1,9 @@
+.map {
+  border-radius: 50px;
+  height: 100%;
+  box-shadow:
+    inset 14px 14px 28px #0b0b0b,
+    inset -14px -14px 28px #0b0b0b;
+  background-color: #f3f3f3;
+  padding: 1rem;
+}

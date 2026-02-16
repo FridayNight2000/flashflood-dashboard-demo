@@ -2,12 +2,14 @@
 
 import { CircleMarker, Popup } from "react-leaflet";
 import type { Station } from "../../types/index";
+import styles from "./StationMarkers.module.css";
 
 type StationMarkersProps = {
   stations: Station[];
   markerRadius: number;
   highlightedStationIds: string[];
   onSelect: (station: Station) => void;
+  onHighlight: (stationId: string | null) => void;
   getDisplayName: (station: Station) => string;
 };
 
@@ -16,6 +18,7 @@ export default function StationMarkers({
   markerRadius,
   highlightedStationIds,
   onSelect,
+  onHighlight,
   getDisplayName,
 }: StationMarkersProps) {
   // 修改备注: 将高亮ID转为集合，快速判断当前点是否为搜索命中点
@@ -42,13 +45,17 @@ export default function StationMarkers({
               // 修改备注: 搜索命中点提高不透明度，增强可见性
               fillOpacity: isHighlighted ? 1 : 0.4,
             }}
+            eventHandlers={{
+              popupopen: () => onHighlight(station.station_id),
+              popupclose: () => onHighlight(null),
+            }}
           >
             <Popup>
               <div>
                 <div>
                   <button
                     type="button"
-                    className="popup-name-btn"
+                    className={styles.popupNameBtn}
                     onClick={() => onSelect(station)}
                   >
                     {getDisplayName(station)}

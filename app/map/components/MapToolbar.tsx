@@ -1,6 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
+import styles from "./MapToolbar.module.css";
 
 type SearchSuggestion = {
   value: string;
@@ -35,10 +36,10 @@ export default function MapToolbar({
       : "Search by basin / station";
 
   return (
-    <div className="map-toolbar">
+    <div className={styles.mapToolbar}>
       <form onSubmit={onSubmit}>
         <input
-          className="map-input"
+          className={styles.mapInput}
           type="text"
           value={searchText}
           onChange={(event) => onSearchTextChange(event.target.value)}
@@ -47,22 +48,22 @@ export default function MapToolbar({
       </form>
       {/* 修改备注: 搜索联想列表，展示 basin_name + station_name 前缀匹配项 */}
       {suggestions.length > 0 && (
-        <ul className="map-suggestions">
+        <ul className={styles.mapSuggestions}>
           {suggestions.map((item) => (
             <li key={`${item.type}-${item.value}`}>
               <button
                 type="button"
-                className="map-suggestion-btn"
+                className={styles.mapSuggestionBtn}
                 onClick={() => onSuggestionSelect(item.value)}
               >
                 <span>{item.value}</span>
-                <span className="map-suggestion-type">{item.type}</span>
+                <span className={styles.mapSuggestionType}>{item.type}</span>
               </button>
             </li>
           ))}
         </ul>
       )}
-      {searchHint && <p className="map-search-hint">{searchHint}</p>}
+      {searchHint && <p className={styles.mapSearchHint}>{searchHint}</p>}
     </div>
   );
 }

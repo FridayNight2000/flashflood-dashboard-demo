@@ -15,6 +15,7 @@ import {
   normalizeText,
   stationDisplayName,
 } from "./mapUtils";
+import styles from "./LeafletMap.module.css";
 
 const center: [number, number] = [36.2048, 138.2529];
 const japanBounds: [[number, number], [number, number]] = [
@@ -23,14 +24,20 @@ const japanBounds: [[number, number], [number, number]] = [
 ];
 
 export default function LeafletMap() {
-  // 修改备注: 打点数据与加载状态
-  const [stations, setStations] = useState<Station[]>([]);
+  //开始ui状态
+  const [stations, setStations] = useState<Station[]>([]); // station-info data的接收
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // 修改备注: 记录当前地图缩放级别，初始与 MapContainer 的 zoom 一致
+  // 记录当前地图缩放级别，初始与 MapContainer 的 zoom 一致
   const [zoom, setZoom] = useState(5);
+
+  const [error, setError] = useState<string | null>(null);
+
   // 修改备注: 记录被点击的站点，用于右侧信息面板展示
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
+  // 修改备注: 记录被选中的 Basin 名称及其站点数量
+  const [selectedBasin, setSelectedBasin] = useState<string | null>(null);
+  const [basinStationCount, setBasinStationCount] = useState<number>(0);
+
   // 修改备注: 保存地图实例，用于搜索后自动跳转
   const [mapInstance, setMapInstance] = useState<LeafletMapInstance | null>(
     null,
@@ -45,6 +52,7 @@ export default function LeafletMap() {
 
   //REVIEW - 1. station info  data fetching
   useEffect(() => {
+    //NOTE -  构造一个controller object 用于在意外 unmount 组件的时候(在fetch 过程中) 直接停止fetch 行为,防止内存泄露
     const controller = new AbortController();
 
     async function fetchAllStations() {
@@ -70,7 +78,6 @@ export default function LeafletMap() {
           totalPages = data.pagination.totalPages || 1;
           page += 1;
         }
-
         setStations(merged);
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
@@ -85,21 +92,10 @@ export default function LeafletMap() {
     return () => controller.abort();
   }, []);
 
-  // 修改备注: 仅渲染有有效经纬度的站点
-  const validStations = useMemo(
-    () =>
-      stations.filter(
-        (station) =>
-          typeof station.latitude === "number" &&
-          typeof station.longitude === "number",
-      ),
-    [stations],
-  );
-
-  // 修改备注: 基于 basin_name 聚合，供搜索优先匹配
+  // 基于 basin_name 聚合，供搜索优先匹配
   const basinGroups = useMemo(() => {
     const groups = new Map<string, Station[]>();
-    validStations.forEach((station) => {
+    stations.forEach((station) => {
       const name = station.basin_name?.trim();
       if (!name) {
         return;
@@ -109,7 +105,7 @@ export default function LeafletMap() {
       groups.set(name, list);
     });
     return groups;
-  }, [validStations]);
+  }, [stations]);
 
   // 修改备注: 打点半径随缩放指数增长，起始更小，放大后更明显
   const markerRadius = useMemo(() => {
@@ -137,7 +133,7 @@ export default function LeafletMap() {
     }
 
     const unique = new Set<string>();
-    validStations.forEach((station) => {
+    stations.forEach((station) => {
       const name = station.station_name?.trim();
       if (!name) {
         return;
@@ -150,7 +146,7 @@ export default function LeafletMap() {
     return Array.from(unique)
       .sort((a, b) => a.localeCompare(b))
       .slice(0, 8);
-  }, [validStations, searchText]);
+  }, [stations, searchText]);
 
   // 修改备注: 合并 basin/station 联想，交给工具栏统一展示
   const searchSuggestions = useMemo(
@@ -219,13 +215,15 @@ export default function LeafletMap() {
       const matched = basinGroups.get(basin) ?? [];
       zoomToStations(matched);
       setSelectedStation(null);
+      setSelectedBasin(basin);
+      setBasinStationCount(matched.length);
       setHighlightedStationIds(matched.map((station) => station.station_id));
       setSearchHint(`已定位流域: ${basin}（${matched.length} 个站点）`);
       return true;
     }
 
     const normalizedKeyword = normalizeText(keyword);
-    const stationMatch = validStations.find((station) => {
+    const stationMatch = stations.find((station) => {
       const candidates = [
         station.station_name,
         station.station_name2,
@@ -265,7 +263,7 @@ export default function LeafletMap() {
   }
 
   return (
-    <div className="map-shell">
+    <div className={styles.mapShell}>
       <MapToolbar
         isLoading={isLoading}
         error={error}
@@ -285,7 +283,7 @@ export default function LeafletMap() {
         maxBounds={japanBounds}
         maxBoundsViscosity={1}
         scrollWheelZoom
-        className="leaflet-canvas"
+        className={styles.leafletCanvas}
         attributionControl
       >
         {/* 修改备注: 监听缩放变化用于驱动 marker 半径变化 */}
@@ -300,16 +298,43 @@ export default function LeafletMap() {
         />
 
         <StationMarkers
-          stations={validStations}
+          stations={stations}
           markerRadius={markerRadius}
           highlightedStationIds={highlightedStationIds}
           onSelect={setSelectedStation}
+          onHighlight={(stationId) => {
+            if (stationId) {
+              setHighlightedStationIds((prev) =>
+                prev.includes(stationId) ? prev : [...prev, stationId],
+              );
+            } else {
+              if (selectedBasin) {
+                const basinStations = basinGroups.get(selectedBasin) ?? [];
+                setHighlightedStationIds(
+                  basinStations.map((station) => station.station_id),
+                );
+              } else {
+                setHighlightedStationIds([]);
+              }
+            }
+          }}
           getDisplayName={stationDisplayName}
         />
       </MapContainer>
       <StationSidePanel
         selectedStation={selectedStation}
-        onClose={() => setSelectedStation(null)}
+        selectedBasin={selectedBasin}
+        basinStationCount={basinStationCount}
+        onCloseStation={() => {
+          setSelectedStation(null);
+          mapInstance?.closePopup();
+        }}
+        onCloseBasin={() => {
+          setSelectedStation(null);
+          setSelectedBasin(null);
+          setHighlightedStationIds([]);
+          mapInstance?.closePopup();
+        }}
         getDisplayName={stationDisplayName}
       />
     </div>
