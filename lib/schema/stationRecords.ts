@@ -1,11 +1,11 @@
-import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { index, pgTable, real, serial, text } from 'drizzle-orm/pg-core';
 
 import { stations } from './stations';
 
-export const stationRecords = sqliteTable(
+export const stationRecords = pgTable(
   'station_records',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     station_id: text('station_id').references(() => stations.station_id),
     start_time: text('start_time'),
     peak_time: text('peak_time'),

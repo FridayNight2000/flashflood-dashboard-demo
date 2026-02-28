@@ -12,7 +12,7 @@ function parsePositiveInt(value: string | null, fallback: number, max: number) {
   return Math.min(parsed, max);
 }
 
-export function GET(req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const q = searchParams.get('q')?.trim() ?? '';
@@ -20,7 +20,8 @@ export function GET(req: NextRequest) {
     const page = parsePositiveInt(searchParams.get('page'), 1, Number.MAX_SAFE_INTEGER);
     const pageSize = parsePositiveInt(searchParams.get('pageSize'), 200, 1000);
 
-    return NextResponse.json(queryStations({ q, hasData, page, pageSize }));
+    const result = await queryStations({ q, hasData, page, pageSize });
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       {

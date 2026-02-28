@@ -1,12 +1,13 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+
 import { defineConfig } from 'drizzle-kit';
-import path from 'path';
 
 export default defineConfig({
-  dialect: 'sqlite',
+  dialect: 'postgresql',
   schema: './lib/schema/index.ts',
   out: './drizzle',
   dbCredentials: {
-    // drizzle-kit 执行时 cwd=web/，path.join 结果与 lib/db.ts 一致
-    url: path.join(process.cwd(), '..', 'hydrology_data.db'),
+    url: process.env.DATABASE_URL!,
   },
 });

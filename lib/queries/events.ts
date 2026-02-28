@@ -30,8 +30,8 @@ function stationWhere(filter: StationEventFilter) {
   return and(eq(stationRecords.station_id, filter.stationId), ...dateRange(filter));
 }
 
-export function queryBasinSummary(basinName: string) {
-  return db
+export async function queryBasinSummary(basinName: string) {
+  const [row] = await db
     .select({
       totalEvents: sql<number>`count(${stationRecords.id})`,
       firstStartTime: sql<string | null>`min(${stationRecords.start_time})`,
@@ -41,12 +41,12 @@ export function queryBasinSummary(basinName: string) {
     })
     .from(stationRecords)
     .innerJoin(stations, eq(stationRecords.station_id, stations.station_id))
-    .where(eq(stations.basin_name, basinName))
-    .get()!;
+    .where(eq(stations.basin_name, basinName));
+  return row;
 }
 
-export function queryFilteredSummary(filter: EventFilter) {
-  return db
+export async function queryFilteredSummary(filter: EventFilter) {
+  const [row] = await db
     .select({
       matchedEvents: sql<number>`count(${stationRecords.id})`,
       maxPeakValue: sql<number | null>`max(${stationRecords.peak_value})`,
@@ -56,11 +56,11 @@ export function queryFilteredSummary(filter: EventFilter) {
     })
     .from(stationRecords)
     .innerJoin(stations, eq(stationRecords.station_id, stations.station_id))
-    .where(basinJoinWhere(filter))
-    .get()!;
+    .where(basinJoinWhere(filter));
+  return row;
 }
 
-export function queryMatchedSeries(filter: EventFilter) {
+export async function queryMatchedSeries(filter: EventFilter) {
   return db
     .select({
       id: stationRecords.id,
@@ -77,11 +77,10 @@ export function queryMatchedSeries(filter: EventFilter) {
         isNotNull(stationRecords.peak_value),
       ),
     )
-    .orderBy(asc(stationRecords.peak_time))
-    .all();
+    .orderBy(asc(stationRecords.peak_time));
 }
 
-export function queryMatchedEvents(filter: EventFilter) {
+export async function queryMatchedEvents(filter: EventFilter) {
   return db
     .select({
       id: stationRecords.id,
@@ -100,12 +99,11 @@ export function queryMatchedEvents(filter: EventFilter) {
     .from(stationRecords)
     .innerJoin(stations, eq(stationRecords.station_id, stations.station_id))
     .where(basinJoinWhere(filter))
-    .orderBy(asc(stationRecords.peak_time))
-    .all();
+    .orderBy(asc(stationRecords.peak_time));
 }
 
-export function queryStationSummary(stationId: string) {
-  return db
+export async function queryStationSummary(stationId: string) {
+  const [row] = await db
     .select({
       totalEvents: sql<number>`count(${stationRecords.id})`,
       firstStartTime: sql<string | null>`min(${stationRecords.start_time})`,
@@ -114,12 +112,12 @@ export function queryStationSummary(stationId: string) {
       maxPeakTime: sql<string | null>`max(${stationRecords.peak_time})`,
     })
     .from(stationRecords)
-    .where(eq(stationRecords.station_id, stationId))
-    .get()!;
+    .where(eq(stationRecords.station_id, stationId));
+  return row;
 }
 
-export function queryStationFilteredSummary(filter: StationEventFilter) {
-  return db
+export async function queryStationFilteredSummary(filter: StationEventFilter) {
+  const [row] = await db
     .select({
       matchedEvents: sql<number>`count(${stationRecords.id})`,
       maxPeakValue: sql<number | null>`max(${stationRecords.peak_value})`,
@@ -128,11 +126,11 @@ export function queryStationFilteredSummary(filter: StationEventFilter) {
       avgFallTime: sql<number | null>`avg(${stationRecords.fall_time})`,
     })
     .from(stationRecords)
-    .where(stationWhere(filter))
-    .get()!;
+    .where(stationWhere(filter));
+  return row;
 }
 
-export function queryStationMatchedSeries(filter: StationEventFilter) {
+export async function queryStationMatchedSeries(filter: StationEventFilter) {
   return db
     .select({
       id: stationRecords.id,
@@ -148,11 +146,10 @@ export function queryStationMatchedSeries(filter: StationEventFilter) {
         isNotNull(stationRecords.peak_value),
       ),
     )
-    .orderBy(asc(stationRecords.peak_time))
-    .all();
+    .orderBy(asc(stationRecords.peak_time));
 }
 
-export function queryStationRecentEvents(stationId: string, limit: number) {
+export async function queryStationRecentEvents(stationId: string, limit: number) {
   return db
     .select({
       id: stationRecords.id,
@@ -169,11 +166,10 @@ export function queryStationRecentEvents(stationId: string, limit: number) {
     .from(stationRecords)
     .where(eq(stationRecords.station_id, stationId))
     .orderBy(desc(stationRecords.peak_time))
-    .limit(limit)
-    .all();
+    .limit(limit);
 }
 
-export function queryStationMatchedEvents(filter: StationEventFilter) {
+export async function queryStationMatchedEvents(filter: StationEventFilter) {
   return db
     .select({
       id: stationRecords.id,
@@ -190,6 +186,5 @@ export function queryStationMatchedEvents(filter: StationEventFilter) {
     })
     .from(stationRecords)
     .where(stationWhere(filter))
-    .orderBy(asc(stationRecords.peak_time))
-    .all();
+    .orderBy(asc(stationRecords.peak_time));
 }

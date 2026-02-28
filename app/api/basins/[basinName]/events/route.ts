@@ -42,14 +42,14 @@ export async function GET(req: NextRequest, context: { params: Promise<{ basinNa
     const endTs = peakEnd ? `${peakEnd} 23:59:59` : null;
     const filter = { basinName: cleanBasin, startTs, endTs };
 
-    const filteredSummary = queryFilteredSummary(filter);
+    const filteredSummary = await queryFilteredSummary(filter);
     const matchedEvents = filteredSummary.matchedEvents ?? 0;
 
     if (countOnly) {
       return NextResponse.json({ basinName: cleanBasin, matchedEvents });
     }
 
-    const summary = queryBasinSummary(cleanBasin);
+    const summary = await queryBasinSummary(cleanBasin);
     const totalEvents = summary.totalEvents ?? 0;
 
     return NextResponse.json({
@@ -67,8 +67,8 @@ export async function GET(req: NextRequest, context: { params: Promise<{ basinNa
         avgFallTime: filteredSummary.avgFallTime,
       },
       recentEvents: [],
-      matchedSeries: includeMatchedSeries ? queryMatchedSeries(filter) : undefined,
-      matchedEventsDetail: includeMatchedEvents ? queryMatchedEvents(filter) : undefined,
+      matchedSeries: includeMatchedSeries ? await queryMatchedSeries(filter) : undefined,
+      matchedEventsDetail: includeMatchedEvents ? await queryMatchedEvents(filter) : undefined,
     });
   } catch (error) {
     return NextResponse.json(

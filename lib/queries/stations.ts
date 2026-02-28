@@ -10,7 +10,7 @@ export interface StationFilter {
   pageSize?: number;
 }
 
-export function queryStations(filter: StationFilter) {
+export async function queryStations(filter: StationFilter) {
   const { q = '', hasData, page = 1, pageSize = 200 } = filter;
   const offset = (page - 1) * pageSize;
 
@@ -36,21 +36,19 @@ export function queryStations(filter: StationFilter) {
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const [countRow] = db
+  const [countRow] = await db
     .select({ total: sql<number>`count(*)` })
     .from(stations)
-    .where(where)
-    .all();
+    .where(where);
   const total = countRow.total;
 
-  const items = db
+  const items = await db
     .select()
     .from(stations)
     .where(where)
     .orderBy(desc(stations.has_data), asc(stations.station_id))
     .limit(pageSize)
-    .offset(offset)
-    .all();
+    .offset(offset);
 
   return {
     items,

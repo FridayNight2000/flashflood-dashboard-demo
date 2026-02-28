@@ -1,13 +1,8 @@
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import path from 'path';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 
 import * as schema from './schema';
 
-const dbPath = path.join(process.cwd(), '..', 'hydrology_data.db');
-const sqlite = new Database(dbPath, {
-  readonly: true,
-  fileMustExist: true,
-});
+const client = postgres(process.env.DATABASE_URL!);
 
-export const db = drizzle(sqlite, { schema });
+export const db = drizzle(client, { schema });

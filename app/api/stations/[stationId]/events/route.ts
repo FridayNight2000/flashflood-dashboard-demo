@@ -77,7 +77,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ station
       endTs,
     };
 
-    const filteredSummary = queryStationFilteredSummary(filter);
+    const filteredSummary = await queryStationFilteredSummary(filter);
     const matchedEvents = filteredSummary.matchedEvents ?? 0;
 
     if (countOnly) {
@@ -87,18 +87,18 @@ export async function GET(req: NextRequest, context: { params: Promise<{ station
       });
     }
 
-    const summary = queryStationSummary(cleanStationId);
+    const summary = await queryStationSummary(cleanStationId);
     const totalEvents = summary.totalEvents ?? 0;
 
-    const recentEvents = includeRecent ? queryStationRecentEvents(cleanStationId, limit) : [];
-    let matchedSeries: ReturnType<typeof queryStationMatchedSeries> | undefined;
+    const recentEvents = includeRecent ? await queryStationRecentEvents(cleanStationId, limit) : [];
+    let matchedSeries: Awaited<ReturnType<typeof queryStationMatchedSeries>> | undefined;
     if (includeMatchedSeries) {
-      matchedSeries = queryStationMatchedSeries(filter);
+      matchedSeries = await queryStationMatchedSeries(filter);
     }
 
-    let matchedEventsDetail: ReturnType<typeof queryStationMatchedEvents> | undefined;
+    let matchedEventsDetail: Awaited<ReturnType<typeof queryStationMatchedEvents>> | undefined;
     if (includeMatchedEvents) {
-      matchedEventsDetail = queryStationMatchedEvents(filter);
+      matchedEventsDetail = await queryStationMatchedEvents(filter);
     }
 
     return NextResponse.json({
